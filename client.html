@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0d0d1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+<title>Bulbous</title>
+<style>
+/* ═══════════════════════════════════════════════════════
+   TOKENS & RESET
+═══════════════════════════════════════════════════════ */
+:root {
+  --bg:        #0d0d1a;
+  --surface:   #16162a;
+  --surface2:  #1f1f38;
+  --border:    #2e2e50;
+  --text:      #e8e8f0;
+  --muted:     #7070a0;
+  --accent:    #c084fc;
+  --red:       #e63946;
+  --blue:      #3a86ff;
+  --green:     #43aa8b;
+  --yellow:    #f4c430;
+  --red-dim:   #3a0c10;
+  --blue-dim:  #0f2040;
+  --green-dim: #0d2e24;
+  --yellow-dim:#3a2a08;
+  --card-w:      88px;
+  --card-h:      123px;
+  --baelf-w:     95px;
+  --baelf-h:     165px;
+  --centre-baelf-w: 143px;
+  --my-baelf-w:  76px;
+  --radius:      10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 16px; }
+button { cursor: pointer; border: none; font: inherit; }
+input  { font: inherit; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ═══════════════════════════════════════════════════════
+   SCREEN SYSTEM
+═══════════════════════════════════════════════════════ */
+.screen { display: none; width: 100%; height: 100%; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+#toast {
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #333355; color: #fff; padding: 10px 20px;
+  border-radius: 20px; font-size: 13px; z-index: 9999;
+  transition: transform .3s ease; pointer-events: none;
+  max-width: 90vw; text-align: center;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ═══════════════════════════════════════════════════════
+   SHARED BUTTONS
+═══════════════════════════════════════════════════════ */
+.btn-primary {
+  padding: 12px; border-radius: var(--radius); background: var(--accent);
+  color: #0d0d1a; font-weight: 700; font-size: 1rem; transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .85; }
+.btn-ghost {
+  padding: 8px 14px; border-radius: var(--radius); background: transparent;
+  border: 1px solid var(--border); color: var(--muted);
+  transition: border-color .15s, color .15s;
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-action {
+  padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: .95rem;
+  transition: opacity .15s, transform .1s; border: 1px solid transparent;
+}
+.btn-action:active { transform: scale(.97); }
+.btn-action:disabled { opacity: .35; cursor: not-allowed; }
+.btn-bet     { background: var(--green);   color: #fff; }
+.btn-swap    { background: var(--blue);    color: #fff; }
+.btn-pass    { background: var(--surface2); border-color: var(--border); color: var(--text); }
+.btn-confirm { background: var(--accent);  color: #0d0d1a; }
+.btn-cancel  { background: transparent;   border-color: var(--border); color: var(--muted); }
+
+/* ═══════════════════════════════════════════════════════
+   SCREEN: NAME
+═══════════════════════════════════════════════════════ */
+#screen-name {
+  align-items: center; justify-content: center; gap: 24px;
+  background: radial-gradient(ellipse at 50% 30%, #1f1040 0%, var(--bg) 70%);
+}
+.logo h1 { font-size: 3rem; letter-spacing: .15em; color: var(--accent); text-shadow: 0 0 40px #c084fc88; text-align: center; }
+.logo p   { color: var(--muted); margin-top: 4px; font-size: .9rem; letter-spacing: .08em; text-align: center; }
+.name-box { display: flex; flex-direction: column; gap: 12px; width: min(340px,90vw); }
+.name-box input {
+  padding: 12px 16px; border-radius: var(--radius); border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); font-size: 1rem; outline: none;
+}
+.name-box input:focus { border-color: var(--accent); }
+
+/* ═══════════════════════════════════════════════════════
+   SCREEN: LOBBY
+═══════════════════════════════════════════════════════ */
+#screen-lobby { background: var(--bg); }
+.lobby-header {
+  padding: 18px 22px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px;
+}
+.lobby-header h2 { font-size: 1.25rem; flex: 1; color: var(--accent); }
+.lobby-header span { color: var(--muted); font-size: .92rem; }
+.lobby-list { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.table-row {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px 20px; display: flex; align-items: center; gap: 14px;
+  transition: border-color .15s;
+}
+.table-row:hover { border-color: var(--accent); }
+.table-info { flex: 1; }
+.table-info strong { display: block; margin-bottom: 3px; font-size: 1rem; }
+.table-info small  { color: var(--muted); font-size: .85rem; }
+.table-players { color: var(--muted); font-size: .9rem; min-width: 52px; text-align: right; }
+.table-btn {
+  padding: 10px 18px; border-radius: 8px; background: var(--accent); color: #0d0d1a;
+  font-weight: 600; font-size: .9rem; min-width: 80px;
+}
+.table-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════════════
+   SCREEN: WAITING
+═══════════════════════════════════════════════════════ */
+#screen-waiting { align-items: center; justify-content: center; gap: 20px; background: var(--bg); }
+.waiting-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 28px 36px; width: min(400px,92vw); display: flex; flex-direction: column; gap: 16px;
+}
+.waiting-card h3 { color: var(--accent); font-size: 1.2rem; }
+.seat-list { display: flex; flex-direction: column; gap: 8px; }
+.seat-row  { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; background: var(--surface2); }
+.seat-dot  { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.seat-dot.filled { background: var(--green); }
+.seat-dot.me     { background: var(--accent); }
+.waiting-actions { display: flex; gap: 10px; }
+
+/* ═══════════════════════════════════════════════════════
+   SCREEN: GAME
+═══════════════════════════════════════════════════════ */
+#screen-game { display: none; flex-direction: column; overflow: hidden; background: var(--bg); }
+#screen-game.active { display: flex; }
+
+#game-header {
+  padding: 10px 18px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px; flex-shrink: 0;
+  background: var(--surface); min-height: 52px;
+}
+.hdr-phase { flex: 1; font-size: 1.1rem; color: var(--accent); font-weight: 700; letter-spacing: .03em; }
+.hdr-info  { color: var(--muted); font-size: .92rem; }
+#btn-leave { padding: 7px 16px; font-size: .88rem; border-radius: 6px; background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+/* Opponents strip */
+#opponents-area {
+  display: flex; gap: 10px; padding: 10px 16px; flex-shrink: 0;
+  overflow-x: auto; overflow-y: visible; border-bottom: 1px solid var(--border); background: var(--surface);
+  justify-content: center;
+}
+.opponent-panel {
+  display: flex; flex-direction: column; gap: 4px; min-width: 155px;
+  background: var(--surface2); border-radius: 10px; padding: 9px 11px;
+  border: 2px solid transparent; transition: border-color .2s; flex-shrink: 0;
+}
+.opponent-panel.governor { border-color: var(--yellow); }
+.opponent-panel.acting   { border-color: var(--accent); animation: pulse .8s ease infinite alternate; }
+@keyframes pulse { from { box-shadow: none; } to { box-shadow: 0 0 12px var(--accent); } }
+.opp-name    { font-size: .88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.opp-meta    { font-size: .78rem; color: var(--muted); }
+.opp-action  { font-size: .8rem; min-height: 1.1rem; font-weight: 600; }
+.opp-baelfs  { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; align-items: flex-start; }
+
+/* Mini baelfungious — sized to show bulb distribution clearly */
+.mini-baelf {
+  width: 64px; height: 32px; border-radius: 5px; border: 1px solid var(--border);
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+  padding: 2px 5px; font-size: .6rem; overflow: hidden; position: relative; flex-shrink: 0;
+}
+.mini-baelf.active-slot { border-width: 2px; height: 42px; }
+.mini-baelf.complete    { opacity: .35; }
+.mini-slot-dots { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; align-items: center; flex: 1; }
+.mini-slot-dot  { width: 7px; height: 7px; border-radius: 50%; border: 1px solid rgba(255,255,255,.2); background: transparent; flex-shrink: 0; }
+.mini-slot-dot.filled { border-color: transparent; filter: brightness(1.3) saturate(1.5); box-shadow: 0 0 3px currentColor; }
+.mini-count { font-size: .52rem; opacity: .7; color: #fff; white-space: nowrap; margin-left: 3px; line-height: 1; }
+
+/* Centre */
+#centre-area {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  gap: 18px; padding: 12px 16px; overflow: hidden; flex-wrap: wrap;
+}
+.active-baelf-slot {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative;
+}
+.owner-label {
+  font-size: .78rem; color: var(--muted); max-width: var(--baelf-w);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
+}
+.gov-marker {
+  position: absolute; top: 16px; left: -8px;
+  background: var(--yellow); color: #000; font-size: .55rem; font-weight: 700;
+  padding: 1px 4px; border-radius: 3px;
+}
+
+/* Baelfungious card */
+.baelf-card {
+  width: var(--baelf-w);
+  height: calc(var(--baelf-w) * 15 / 9);
+  border-radius: 7px; border: 2px solid var(--border);
+  overflow: hidden;
+  cursor: default; position: relative; user-select: none;
+  transition: border-color .2s, transform .15s, box-shadow .2s, z-index 0s;
+}
+.baelf-card.clickable { cursor: pointer; }
+.baelf-card.clickable:hover { transform: translateY(-6px); box-shadow: 0 10px 22px #00000080; z-index: 30; position: relative; }
+.baelf-card.selected  { border-color: var(--accent) !important; box-shadow: 0 0 16px var(--accent); z-index: 30; position: relative; transform: translateY(-4px); }
+.baelf-card.contested { border-color: var(--yellow) !important; }
+.baelf-card.complete  { opacity: .45; }
+/* Centre-area baelf cards: 150% */
+#centre-area .baelf-card {
+  width: var(--centre-baelf-w);
+  height: calc(var(--centre-baelf-w) * 15 / 9);
+}
+/* My baelf row: 80% */
+#my-baelfs-row .baelf-card {
+  width: var(--my-baelf-w);
+  height: calc(var(--my-baelf-w) * 15 / 9);
+}
+
+/* Image fills card, full from top — no offset */
+.baelf-card img.baelf-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center top; border-radius: 5px;
+}
+/* Bottom overlay — fixed height 24px, holds slot dots + count */
+.baelf-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 36px;
+  background: rgba(0,0,0,.82); backdrop-filter: blur(2px);
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  gap: 4px; padding: 0 4px;
+}
+.baelf-sym    { display: none; }
+.baelf-slots  { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; align-items: center; }
+.baelf-slot   { width: 9px; height: 9px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); flex-shrink: 0; }
+.baelf-count  { font-size: .55rem; opacity: .75; color: #fff; line-height: 1; white-space: nowrap; }
+
+/* Charm card */
+.charm-card {
+  width: var(--card-w); height: var(--card-h); flex-shrink: 0;
+  border-radius: 5px; border: 2px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: space-between; padding: 5px 4px;
+  cursor: default; position: relative; user-select: none; overflow: hidden;
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+.charm-card.clickable { cursor: pointer; }
+.charm-card.clickable:hover { transform: translateY(-7px); box-shadow: 0 10px 18px #00000070; z-index: 20; }
+.charm-card.selected { border-color: var(--accent) !important; box-shadow: 0 0 10px var(--accent); transform: translateY(-9px); z-index: 20; }
+.charm-card.invalid  { opacity: .3; cursor: not-allowed; }
+.charm-top   { font-size: 1.15rem; font-weight: 800; line-height: 1; }
+.charm-mid   { font-size: 1.8rem; font-weight: 900; }
+.charm-bot   { font-size: .7rem; letter-spacing: .04em; opacity: .75; }
+
+/* My area */
+#my-area {
+  border-top: 1px solid var(--border); background: var(--surface);
+  flex-shrink: 0; display: flex; flex-direction: column;
+  gap: 8px; padding: 10px 16px; max-height: 52vh; overflow-y: auto;
+}
+#my-info-row   { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; }
+#my-name-badge {
+  font-size: .92rem; font-weight: 700; padding: 3px 11px;
+  border-radius: 5px; border: 1px solid; white-space: nowrap;
+}
+#my-status     { font-size: .85rem; color: var(--muted); text-align: center; }
+#my-baelfs-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; justify-content: center; overflow-y: visible; }
+.my-baelf-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.my-baelf-tag  { font-size: .65rem; color: var(--muted); white-space: nowrap; }
+#action-bar    { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center; }
+#hand-label    { font-size: .78rem; color: var(--muted); text-align: center; }
+#my-hand-row   {
+  display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px;
+  padding-top: 16px;
+  min-height: calc(var(--card-h) + 26px);
+  position: relative; z-index: 1;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════
+   OVERLAYS
+═══════════════════════════════════════════════════════ */
+.overlay {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(3px);
+  flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+}
+.overlay.show { display: flex; }
+
+/* Reveal */
+.reveal-box {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 14px;
+  padding: 22px 26px; max-width: 92vw; width: 460px;
+  display: flex; flex-direction: column; gap: 12px; max-height: 88vh; overflow-y: auto;
+}
+.reveal-title { font-size: 1.05rem; font-weight: 700; color: var(--accent); }
+.reveal-row   {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-top: 1px solid var(--border);
+}
+.reveal-pname { min-width: 80px; font-size: .85rem; font-weight: 600; }
+.reveal-cards { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; align-items: center; }
+.reveal-result{
+  font-size: .95rem; font-weight: 700; text-align: center;
+  padding: 8px; border-radius: 6px; background: var(--surface);
+}
+.btn-dismiss  { padding: 10px; border-radius: 8px; background: var(--accent); color: #000; font-weight: 700; width: 100%; }
+
+/* Tiebreak */
+.tiebreak-box {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px 24px; max-width: 92vw; width: 400px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.tiebreak-title { font-size: 1rem; font-weight: 700; color: var(--yellow); }
+#tb-hand { display: flex; gap: 5px; flex-wrap: wrap; min-height: calc(var(--card-h) + 8px); }
+
+/* Game over */
+.gameover-box {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 14px;
+  padding: 24px 28px; max-width: 92vw; width: 460px;
+  display: flex; flex-direction: column; gap: 16px; max-height: 88vh; overflow-y: auto;
+}
+.gameover-title { font-size: 1.4rem; font-weight: 800; color: var(--accent); text-align: center; }
+.score-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.score-table th, .score-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: right; }
+.score-table th { color: var(--muted); font-weight: 600; font-size: .75rem; }
+.score-table td:first-child, .score-table th:first-child { text-align: left; }
+.score-table .winner-row td { color: var(--yellow); font-weight: 700; }
+.go-actions { display: flex; gap: 10px; }
+
+/* ═══════════════════════════════════════════════════════
+   RULES MODAL
+═══════════════════════════════════════════════════════ */
+#rules-overlay {
+  display: none; position: fixed; inset: 0; z-index: 700;
+  background: rgba(0,0,0,.82); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+#rules-overlay.show { display: flex; }
+.rules-box {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 14px;
+  padding: 24px 28px; max-width: 92vw; width: 580px; max-height: 88vh;
+  display: flex; flex-direction: column; gap: 0; overflow: hidden;
+}
+.rules-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-shrink: 0;
+}
+.rules-header h2 { flex: 1; color: var(--accent); font-size: 1.2rem; }
+.btn-close-rules {
+  padding: 4px 10px; border-radius: 6px; background: transparent;
+  border: 1px solid var(--border); color: var(--muted); font-size: .85rem; cursor: pointer;
+}
+.rules-tabs {
+  display: flex; gap: 4px; margin-bottom: 12px; flex-shrink: 0; flex-wrap: wrap;
+}
+.rules-tab {
+  padding: 5px 12px; border-radius: 6px; background: transparent;
+  border: 1px solid var(--border); color: var(--muted); font-size: .8rem; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.rules-tab.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+.rules-content { flex: 1; overflow-y: auto; font-size: .83rem; line-height: 1.6; color: var(--text); }
+.rules-section { display: none; }
+.rules-section.active { display: block; }
+.rules-section h3 { color: var(--accent); font-size: .95rem; margin: 14px 0 6px; }
+.rules-section h3:first-child { margin-top: 0; }
+.rules-section p  { margin-bottom: 8px; color: #c0c0d8; }
+.rules-section ul { padding-left: 18px; margin-bottom: 8px; }
+.rules-section li { margin-bottom: 4px; color: #c0c0d8; }
+.rules-section .pill {
+  display: inline-block; padding: 1px 7px; border-radius: 10px;
+  font-size: .75rem; font-weight: 600; margin: 1px;
+}
+.pill-red    { background: var(--red-dim);    color: var(--red);    border: 1px solid var(--red); }
+.pill-blue   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid var(--blue); }
+.pill-green  { background: var(--green-dim);  color: var(--green);  border: 1px solid var(--green); }
+.pill-yellow { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow); }
+.rule-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; margin: 8px 0;
+}
+.rule-box strong { color: var(--accent); }
+
+/* PWA Install Banner */
+#pwa-banner {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 800;
+  background: linear-gradient(135deg, #1f1f38, #2a1a4a);
+  border-top: 1px solid var(--accent);
+  padding: 14px 20px 18px; /* extra bottom for home-indicator bar */
+  display: flex; align-items: center; gap: 14px;
+  animation: slideUp .35s ease;
+}
+#pwa-banner.hidden { display: none !important; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.pwa-icon {
+  width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem;
+}
+.pwa-text { flex: 1; }
+.pwa-text strong { display: block; font-size: .95rem; color: #fff; margin-bottom: 2px; }
+.pwa-text span   { font-size: .78rem; color: var(--muted); }
+#btn-pwa-install {
+  padding: 10px 18px; background: var(--accent); color: #0d0d1a;
+  border-radius: 8px; font-weight: 700; font-size: .9rem; white-space: nowrap; flex-shrink: 0;
+}
+#btn-pwa-dismiss {
+  padding: 8px; background: transparent; border: none;
+  color: var(--muted); font-size: 1.1rem; cursor: pointer; flex-shrink: 0;
+}
+
+/* iOS install guide sheet */
+#ios-install-sheet {
+  display: none; position: fixed; inset: 0; z-index: 850;
+  background: rgba(0,0,0,.78); backdrop-filter: blur(6px);
+  align-items: flex-end; justify-content: center;
+}
+#ios-install-sheet.show { display: flex; }
+.ios-sheet-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 18px 18px 0 0; padding: 24px 24px 36px;
+  width: 100%; max-width: 480px; text-align: center;
+  animation: slideUp .3s ease;
+}
+.ios-sheet-box h3 { font-size: 1.1rem; color: var(--accent); margin-bottom: 8px; }
+.ios-sheet-box p  { font-size: .88rem; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+.ios-step {
+  background: var(--surface); border-radius: 10px; padding: 12px 16px;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 12px; text-align: left;
+}
+.ios-step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
+  color: #0d0d1a; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: .9rem; }
+.ios-step p { margin: 0; font-size: .85rem; color: var(--text); }
+.ios-step strong { color: var(--accent); }
+#btn-ios-close {
+  margin-top: 16px; padding: 12px 30px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px; color: var(--muted);
+  font-size: .9rem; width: 100%;
+}
+
+/* Refill banner */
+#refill-banner {
+  display: none; position: fixed; top: 50px; left: 50%; transform: translateX(-50%);
+  background: var(--green-dim); border: 1px solid var(--green); color: var(--green);
+  padding: 8px 20px; border-radius: 20px; font-size: .82rem; font-weight: 600;
+  z-index: 400; animation: fadeInOut 2.8s forwards;
+}
+@keyframes fadeInOut {
+  0%   { opacity: 0; top: 40px; }
+  15%  { opacity: 1; top: 50px; }
+  75%  { opacity: 1; top: 50px; }
+  100% { opacity: 0; top: 40px; }
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+<div id="refill-banner">🃏 Mão reabastecida!</div>
+<!-- PWA Install Banner (Android / Chrome) -->
+<div id="pwa-banner" class="hidden">
+  <div class="pwa-icon">🍄</div>
+  <div class="pwa-text">
+    <strong>Instalar Bulbous</strong>
+    <span>Adiciona ao ecrã principal para jogar sem browser</span>
+  </div>
+  <button id="btn-pwa-install">Instalar</button>
+  <button id="btn-pwa-dismiss">✕</button>
+</div>
+
+<!-- iOS Install Guide Sheet -->
+<div id="ios-install-sheet">
+  <div class="ios-sheet-box">
+    <h3>🍄 Instalar Bulbous no iPhone</h3>
+    <p>O iOS não permite instalação automática, mas podes adicionar à janela inicial em 3 passos:</p>
+    <div class="ios-step">
+      <div class="ios-step-num">1</div>
+      <p>Toca no ícone de <strong>Partilha</strong> <strong>⬆</strong> na barra do Safari (em baixo ou em cima)</p>
+    </div>
+    <div class="ios-step">
+      <div class="ios-step-num">2</div>
+      <p>Desliza e escolhe <strong>"Adicionar ao ecrã principal"</strong></p>
+    </div>
+    <div class="ios-step">
+      <div class="ios-step-num">3</div>
+      <p>Confirma com <strong>"Adicionar"</strong> — o jogo aparece como app!</p>
+    </div>
+    <button id="btn-ios-close">Entendido</button>
+  </div>
+</div>
+
+
+<!-- ═══ RULES MODAL ═══════════════════════════════════════════ -->
+<div id="rules-overlay">
+  <div class="rules-box">
+    <div class="rules-header">
+      <h2>📖 Como Jogar — Bulbous</h2>
+      <button class="btn-close-rules" id="btn-close-rules">✕ Fechar</button>
+    </div>
+    <div class="rules-tabs">
+      <button class="rules-tab active" data-tab="objetivo">Objetivo</button>
+      <button class="rules-tab" data-tab="setup">Setup</button>
+      <button class="rules-tab" data-tab="ronda">Ronda</button>
+      <button class="rules-tab" data-tab="acoes">Ações</button>
+      <button class="rules-tab" data-tab="cartas">Cartas</button>
+      <button class="rules-tab" data-tab="pontos">Pontuação</button>
+      <button class="rules-tab" data-tab="2p">Modo 2J</button>
+    </div>
+    <div class="rules-content">
+
+      <div class="rules-section active" id="tab-objetivo">
+        <h3>O que é o Bulbous?</h3>
+        <p>Jogo de <strong>bluff, sorte e estratégia</strong> para 2 ou 4 jogadores. Os jogadores apostam cartas para ganhar vazas e colocar <strong>bolbos</strong> nas suas criaturas mágicas — os <strong>Baelfungious</strong>.</p>
+        <h3>Como ganhar</h3>
+        <p>No fim do jogo, conta pontos por:</p>
+        <ul>
+          <li>🔵 <strong>1 ponto</strong> por cada bolbo colocado (em qualquer Baelfungious)</li>
+          <li>👑 <strong>+3 pontos</strong> de maioria numa Baelfungious <em>completa</em> (ou +1 em caso de empate)</li>
+          <li>🌈 <strong>+5 pontos</strong> por ter pelo menos 1 Baelfungious completa de cada cor</li>
+          <li>⭕▲ <strong>+5 pontos</strong> por ter pelo menos 1 Baelfungious completa de cada símbolo</li>
+        </ul>
+        <div class="rule-box">
+          <strong>Baelfungious completa</strong> = todos os slots preenchidos com bolbos.<br>
+          Apenas as completas contam para maioria e coleção!
+        </div>
+      </div>
+
+      <div class="rules-section" id="tab-setup">
+        <h3>Distribuição inicial (4 jogadores)</h3>
+        <ul>
+          <li>Cada jogador recebe uma cor aleatória: <span class="pill pill-red">Vermelho</span> <span class="pill pill-blue">Azul</span> <span class="pill pill-green">Verde</span> <span class="pill pill-yellow">Amarelo</span></li>
+          <li>Cada jogador recebe as <strong>4 Baelfungious da sua cor</strong> (1, 2, 3 e 4 slots)</li>
+          <li>Cada jogador recebe <strong>7 cartas de Charme</strong> na mão</li>
+          <li>O resto forma o baralho de compra</li>
+        </ul>
+        <h3>Início</h3>
+        <p>Antes da primeira ronda, <strong>cada jogador escolhe 1 Baelfungious</strong> da sua reserva para colocar no centro — essa fica ativa para ser disputada.</p>
+        <p>O <strong>Governante da Ronda</strong> é escolhido aleatoriamente. A cada ronda passa para o jogador à esquerda.</p>
+      </div>
+
+      <div class="rules-section" id="tab-ronda">
+        <h3>Estrutura de uma ronda</h3>
+        <p>Cada ronda tem <strong>4 vazas</strong> (uma para cada Baelfungious ativa). O Governante escolhe qual Baelfungious contestar em cada vaza.</p>
+        <div class="rule-box">
+          <strong>Ordem de jogo:</strong> começa sempre no Governante, sentido horário, em todas as 4 vazas.
+        </div>
+        <h3>Sequência de uma vaza</h3>
+        <ul>
+          <li>1. 👑 Governante escolhe o alvo (clica na Baelfungious)</li>
+          <li>2. Cada jogador escolhe uma ação (Apostar / Trocar / Passar)</li>
+          <li>3. Revelação simultânea das apostas</li>
+          <li>4. Maior total ganha → coloca 1 bolbo na Baelfungious</li>
+          <li>5. Próxima vaza</li>
+        </ul>
+        <h3>Fim da ronda</h3>
+        <ul>
+          <li>Baelfungious completas são removidas do centro</li>
+          <li>Os proprietários escolhem novas Baelfungious para substituir</li>
+          <li>Se pelo menos 1 completou: <strong>todos reabastecem a mão</strong> até ao limite</li>
+          <li>Se nenhuma completou: <strong>ninguém compra</strong> — gestão de mão crucial!</li>
+        </ul>
+        <h3>Fim do jogo</h3>
+        <p>Quando um jogador coloca o seu <strong>último Baelfungious</strong> como ativo, joga-se essa ronda até ao fim e contam-se pontos.</p>
+      </div>
+
+      <div class="rules-section" id="tab-acoes">
+        <h3>🃏 Apostar</h3>
+        <p>Joga 1 ou mais cartas viradas para baixo. As cartas devem obedecer à <strong>Regra de Correspondência</strong>:</p>
+        <div class="rule-box">
+          A carta deve ter a <strong>mesma cor</strong> OU o <strong>mesmo símbolo</strong> que a Baelfungious ativa.<br><br>
+          Exemplo: Baelfungious Vermelho▲ → aceita cartas Vermelhas ou o Joker▲.
+        </div>
+        <h3>🔄 Trocar</h3>
+        <p>Descarta 1 ou 2 cartas (viradas para cima) e compra o mesmo número do baralho. <strong>Simétrico: descarta 1 = compra 1.</strong></p>
+        <h3>⏭ Passar</h3>
+        <p>Não participas nesta vaza. Compras 1 carta do baralho de compra.</p>
+        <div class="rule-box">
+          <strong>Atenção:</strong> se ao passares a tua mão ultrapassar o limite, tens de descartar o excesso antes do próximo jogador agir.
+        </div>
+        <h3>⚔️ Desempate</h3>
+        <p>Em caso de empate, cada jogador empatado pode <em>opcionalmente</em> jogar +1 carta da mesma cor da Baelfungious. Tens 20 segundos para decidir.</p>
+        <ul>
+          <li>Quem jogar e tiver maior total ganha</li>
+          <li>Se nenhum jogar → empate persiste → nada acontece</li>
+          <li>Se ambos jogarem e empatarem de novo → nada acontece</li>
+        </ul>
+      </div>
+
+      <div class="rules-section" id="tab-cartas">
+        <h3>Cartas Numéricas (28)</h3>
+        <p>Valores 3–9 em cada cor. Sem símbolo — só correspondem por cor.</p>
+        <h3>Cartas Duplo ×2 (4)</h3>
+        <p>Uma de cada cor. <strong>Multiplica o total da aposta por 2</strong>, mas apenas quando jogada numa Baelfungious da mesma cor. Não tem valor numérico próprio.</p>
+        <div class="rule-box">
+          Exemplo: 7 + 6 + Duplo Vermelho numa Baelfungious Vermelha = (7+6) × 2 = <strong>26</strong>
+        </div>
+        <h3>Jokers (2)</h3>
+        <p>Apenas 2 em todo o jogo — um Círculo ⭕, um Triângulo ▲.</p>
+        <ul>
+          <li>O Joker correto <strong>ganha automaticamente</strong> a vaza, independentemente dos outros totais</li>
+          <li>Joker⭕ ganha em Baelfungious Círculo; Joker▲ ganha em Baelfungious Triângulo</li>
+          <li>Não podes jogar um Joker numa Baelfungious com símbolo errado</li>
+        </ul>
+        <h3>Limite de mão</h3>
+        <p>4 jogadores: <strong>7 cartas</strong> · 2 jogadores: <strong>9 cartas</strong></p>
+      </div>
+
+      <div class="rules-section" id="tab-pontos">
+        <h3>Contagem final</h3>
+        <ul>
+          <li><strong>Bolbos:</strong> 1 ponto por bolbo (completo ou incompleto)</li>
+          <li><strong>Maioria numa completa:</strong> +3 pts (ou +1 pts cada em empate)</li>
+          <li><strong>Coleção de cores:</strong> +5 pts por ter ≥1 completa de cada uma das 4 cores</li>
+          <li><strong>Coleção de símbolos:</strong> +5 pts por ter ≥1 completa ⭕ e ≥1 completa ▲</li>
+        </ul>
+        <div class="rule-box">
+          <strong>Só Baelfungious completas</strong> contam para maioria e bónus de coleção.<br>
+          Bolbos em incompletas valem apenas 1 pt cada.
+        </div>
+        <h3>Vitória</h3>
+        <p>Jogador com mais pontos ganha. Em caso de empate, vitória partilhada.</p>
+      </div>
+
+      <div class="rules-section" id="tab-2p">
+        <h3>Modo 2 Jogadores</h3>
+        <p>Cada jogador escolhe um <strong>símbolo</strong> (⭕ ou ▲) e controla as Baelfungious das 2 cores correspondentes:</p>
+        <ul>
+          <li>⭕ Círculo → <span class="pill pill-blue">Azul</span> + <span class="pill pill-green">Verde</span> (8 Baelfungious, 1–4 slots × 2 cores)</li>
+          <li>▲ Triângulo → <span class="pill pill-red">Vermelho</span> + <span class="pill pill-yellow">Amarelo</span> (8 Baelfungious, 1–4 slots × 2 cores)</li>
+        </ul>
+        <ul>
+          <li><strong>4 Baelfungious ativas</strong> no centro (2 por jogador)</li>
+          <li><strong>Limite de mão: 9 cartas</strong></li>
+          <li>Governante alterna a cada ronda (jogador 1 → jogador 2 → ...)</li>
+          <li>Fim do jogo quando um jogador coloca a sua 8ª e última Baelfungious</li>
+        </ul>
+      </div>
+
+    </div><!-- rules-content -->
+  </div>
+</div>
+
+<!-- ═══ NAME ════════════════════════════════════════════════ -->
+<div id="screen-name" class="screen">
+  <div class="logo">
+    <h1>BULBOUS</h1>
+    <p>Sorte · Bluff · Estratégia</p>
+  </div>
+  <div class="name-box">
+    <input id="inp-name" type="text" maxlength="20" placeholder="O teu nome…" autocomplete="off" spellcheck="false">
+    <button class="btn-primary" id="btn-go">Entrar →</button>
+  </div>
+</div>
+
+<!-- ═══ LOBBY ═══════════════════════════════════════════════ -->
+<div id="screen-lobby" class="screen">
+  <div class="lobby-header">
+    <h2>BULBOUS</h2>
+    <span id="lby-name"></span>
+    <button class="btn-ghost" id="btn-rules-lobby">📖 Como Jogar?</button>
+    <button class="btn-ghost" id="btn-change-name">Mudar nome</button>
+  </div>
+  <div class="lobby-list" id="lobby-list">
+    <p style="color:var(--muted);text-align:center;margin-top:40px">A ligar…</p>
+  </div>
+</div>
+
+<!-- ═══ WAITING ══════════════════════════════════════════════ -->
+<div id="screen-waiting" class="screen">
+  <div class="waiting-card">
+    <h3 id="wait-title">Mesa</h3>
+    <div class="seat-list" id="wait-seats"></div>
+    <p id="wait-hint" style="font-size:.8rem;color:var(--muted)"></p>
+    <div class="waiting-actions">
+      <button class="btn-primary" id="btn-start" style="flex:1">Iniciar Jogo</button>
+      <button class="btn-ghost"   id="btn-leave-wait">Sair</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GAME ═════════════════════════════════════════════════ -->
+<div id="screen-game" class="screen">
+  <div id="game-header">
+    <span class="hdr-phase" id="hdr-phase">—</span>
+    <span class="hdr-info"  id="hdr-round"></span>
+    <span class="hdr-info"  id="hdr-deck" style="margin-left:8px"></span>
+    <button class="btn-ghost" id="btn-rules-game" style="padding:3px 8px;font-size:.72rem">📖 Regras</button>
+    <button id="btn-leave">Sair</button>
+  </div>
+  <div id="opponents-area"></div>
+  <div id="centre-area"></div>
+  <div id="my-area">
+    <div id="my-info-row">
+      <span id="my-name-badge">—</span>
+      <span id="my-status"></span>
+    </div>
+    <div id="my-baelfs-row"></div>
+    <div id="action-bar"></div>
+    <div id="hand-label">Mão</div>
+    <div id="my-hand-row"></div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: REVEAL ══════════════════════════════════════ -->
+<div id="reveal-overlay" class="overlay">
+  <div class="reveal-box">
+    <div class="reveal-title">🃏 Revelação da Vaza</div>
+    <div id="reveal-rows"></div>
+    <div id="reveal-result" class="reveal-result"></div>
+    <button class="btn-dismiss" id="btn-dismiss-reveal">Continuar</button>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: TIEBREAK ════════════════════════════════════ -->
+<div id="tiebreak-overlay" class="overlay">
+  <div class="tiebreak-box">
+    <div class="tiebreak-title">⚔️ Empate — Desempate Opcional</div>
+    <p style="font-size:.8rem;color:var(--muted)">Podes jogar 1 carta da mesma cor da Baelfungious.</p>
+    <div id="tb-timer" style="font-size:.82rem;color:var(--muted)"></div>
+    <div id="tb-hand"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-action btn-confirm" id="btn-tb-play" disabled>Jogar Selecionada</button>
+      <button class="btn-action btn-pass"    id="btn-tb-pass">Passar</button>
+    </div>
+    <div id="tb-waiting" style="font-size:.72rem;color:var(--muted);text-align:center"></div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY: GAME OVER ═══════════════════════════════════ -->
+<div id="gameover-overlay" class="overlay">
+  <div class="gameover-box">
+    <div class="gameover-title">🏆 Fim de Jogo</div>
+    <table class="score-table">
+      <thead>
+        <tr>
+          <th>Jogador</th><th>Bolbos</th><th>Maioria</th><th>Coleção</th><th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="score-tbody"></tbody>
+    </table>
+    <div class="go-actions">
+      <button class="btn-primary" style="flex:1" id="btn-play-again">Jogar Outra Vez</button>
+      <button class="btn-ghost"                  id="btn-go-lobby">Lobbies</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════════════════
+const COLOR_HEX = { red:'#e63946', blue:'#3a86ff', green:'#43aa8b', yellow:'#f4c430' };
+const COLOR_DIM = { red:'#3a0c10', blue:'#0f2040', green:'#0d2e24', yellow:'#3a2a08' };
+const SYM_ICON  = { circle:'⭕', triangle:'▲' };
+const SCREENS   = ['screen-name','screen-lobby','screen-waiting','screen-game'];
+
+// ══════════════════════════════════════════════════════════════
+// CLIENT STATE
+// ══════════════════════════════════════════════════════════════
+let ws          = null;
+let myName      = '';
+let myToken     = sessionStorage.getItem('bulb_token') || '';
+let myLobbyId   = '';
+let mySeat      = -1;
+let mySolo      = false;
+let _lobbies    = [];
+let _gs         = null;   // current game state (buildView output)
+let _prevPhase  = '';
+let _prevHandSize = 0;
+let _mode       = '';     // ''|'bet'|'swap'
+let _selCards   = [];     // card ids selected
+let _selBaelf   = null;   // {baelfIdx?} or {playerIdx,slotIdx}
+let _tbCard     = null;   // tiebreak selected card id
+let _tieInt     = null;
+let _revealKey  = '';
+
+// ══════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════
+function showScreen(id) {
+  SCREENS.forEach(s => document.getElementById(s).classList.toggle('active', s === id));
+}
+let _toastT = null;
+function toast(msg, ms = 3200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.remove('show'), ms);
+}
+function send(obj) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
+}
+function el(id) { return document.getElementById(id); }
+function ce(tag, cls, txt) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (txt !== undefined) e.textContent = txt;
+  return e;
+}
+
+// ══════════════════════════════════════════════════════════════
+// WEBSOCKET
+// ══════════════════════════════════════════════════════════════
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen    = () => { myToken ? send({ type:'RECONNECT', token:myToken }) : send({ type:'LOBBIES' }); };
+  ws.onmessage = e => { try { dispatch(JSON.parse(e.data)); } catch {} };
+  ws.onclose   = () => { toast('Ligação perdida. A reconectar…'); setTimeout(connect, 2500); };
+  ws.onerror   = () => ws.close();
+}
+setInterval(() => send({ type:'PING' }), 15000);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && (!ws || ws.readyState > 1)) connect();
+});
+
+// ══════════════════════════════════════════════════════════════
+// DISPATCHER
+// ══════════════════════════════════════════════════════════════
+function dispatch(msg) {
+  switch (msg.type) {
+    case 'PONG': break;
+    case 'LOBBIES':
+      _lobbies = msg.lobbies;
+      renderLobbyList();
+      break;
+    case 'JOINED':
+      mySeat = msg.seat; myToken = msg.token; myLobbyId = msg.lobbyId; mySolo = msg.solo;
+      sessionStorage.setItem('bulb_token', myToken);
+      break;
+    case 'LOBBY_STATE':
+      renderWaiting(msg);
+      break;
+    case 'RECONNECTED':
+      mySeat = msg.seat; mySolo = msg.solo;
+      toast('Reconectado!');
+      break;
+    case 'RECONNECT_FAIL':
+      sessionStorage.removeItem('bulb_token');
+      myToken = ''; myName = ''; mySeat = -1; myLobbyId = '';
+      closeOverlays();
+      showScreen('screen-name');
+      break;
+    case 'GAME_STATE':
+      renderGame(msg.state);
+      break;
+    case 'GAME_ABORTED':
+      toast(msg.reason || 'Jogo cancelado.', 5000);
+      _gs = null; closeOverlays();
+      send({ type:'REQUEST_STATE' });
+      break;
+    case 'OPPONENT_JOINED':
+      toast(`${msg.name} entrou na mesa`);
+      send({ type:'REQUEST_STATE' });
+      break;
+    case 'OPPONENT_LEFT':
+      toast('Um jogador saiu da mesa.');
+      send({ type:'REQUEST_STATE' });
+      break;
+    case 'OPPONENT_DISCONNECTED_GRACE':
+      toast(`${msg.name} desligou — 45s para reconectar…`, 5000);
+      break;
+    case 'OPPONENT_RECONNECTED':
+      toast(`${msg.name} voltou!`);
+      break;
+    case 'ERROR':
+      toast('⚠️ ' + msg.text, 4000);
+      break;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// LOBBY SCREEN
+// ══════════════════════════════════════════════════════════════
+function renderLobbyList() {
+  if (myName) showScreen('screen-lobby');
+  el('lby-name').textContent = myName;
+  const list = el('lobby-list');
+  list.innerHTML = '';
+  for (const lb of _lobbies) {
+    const full = lb.inGame || lb.seated.length >= lb.maxHumans;
+    const row  = ce('div', 'table-row');
+    const info = ce('div', 'table-info');
+    const strong = ce('strong', null, lb.name);
+    const small  = ce('small',  null,
+      lb.solo ? '🤖 Solo' : lb.mode === '4p' ? '👥 4 Jogadores' : '👤 2 Jogadores');
+    info.append(strong, small);
+
+    const players = ce('div', 'table-players', `${lb.seated.length}/${lb.maxHumans}`);
+
+    const btn = ce('button', 'table-btn');
+    btn.textContent = lb.inGame ? 'Em jogo' : full ? 'Cheia' : 'Entrar';
+    btn.disabled    = full;
+    if (!full) btn.onclick = () => { myLobbyId = lb.id; send({ type:'JOIN_LOBBY', lobbyId:lb.id, playerName:myName }); };
+
+    row.append(info, players, btn);
+    list.appendChild(row);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// WAITING SCREEN
+// ══════════════════════════════════════════════════════════════
+function renderWaiting(msg) {
+  showScreen('screen-waiting');
+  const lb = msg.lobby;
+  el('wait-title').textContent = lb.name;
+
+  const seats = el('wait-seats');
+  seats.innerHTML = '';
+  for (let i = 0; i < lb.maxHumans; i++) {
+    const name  = msg.names[i] || '';
+    const isMe  = i === mySeat;
+    const row   = ce('div','seat-row');
+    const dot   = ce('div', 'seat-dot ' + (name ? (isMe ? 'me' : 'filled') : ''));
+    const label = ce('span', null, name || '— vazio —');
+    if (isMe) label.textContent += ' (tu)';
+    row.append(dot, label);
+    seats.appendChild(row);
+  }
+
+  const isHost = mySeat === 0 || mySolo;
+  const seated = msg.names.filter(Boolean).length;
+  const ready  = mySolo || seated >= lb.maxHumans;
+
+  if (!isHost) {
+    el('wait-hint').textContent = 'Aguarda que o anfitrião inicie.';
+    el('btn-start').disabled = true;
+  } else if (!ready) {
+    el('wait-hint').textContent = `Aguarda mais jogadores (${seated}/${lb.maxHumans}).`;
+    el('btn-start').disabled = true;
+  } else {
+    el('wait-hint').textContent = mySolo ? 'Mesa solo — joga contra 3 bots.' : 'Mesa completa!';
+    el('btn-start').disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// CARD BUILDERS
+// ══════════════════════════════════════════════════════════════
+function mkCharm(c, opts = {}) {
+  // c can be null (hidden back), or a card object
+  const div = ce('div', 'charm-card' +
+    (opts.clickable ? ' clickable' : '') +
+    (opts.selected  ? ' selected'  : '') +
+    (opts.invalid   ? ' invalid'   : ''));
+
+  if (!c) {
+    div.style.background = 'var(--surface2)';
+    div.appendChild(ce('div','charm-mid','🂠'));
+    return div;
+  }
+
+  div.style.borderColor = COLOR_HEX[c.color] || '#555';
+  div.style.background  = COLOR_DIM[c.color] || '#222';
+
+  // Try image first
+  const imgSrc = charmImgSrc(c);
+  if (imgSrc) {
+    const img = document.createElement('img');
+    img.src   = imgSrc;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:3px;position:absolute;inset:0';
+    img.onerror = () => { img.remove(); appendCharmFallback(div, c); };
+    img.onload  = () => { div.style.background = 'transparent'; };
+    div.style.position = 'relative';
+    div.appendChild(img);
+    return div;
+  }
+
+  appendCharmFallback(div, c);
+  return div;
+}
+
+function charmImgSrc(c) {
+  if (c.type === 'joker')  return `/cards/card_joker_${c.symbol}.png`;
+  if (c.type === 'double') return `/cards/card_${c.color}_x2.png`;
+  if (c.type === 'numeric') return `/cards/card_${c.color}_${c.value}.png`;
+  return null;
+}
+
+function appendCharmFallback(div, c) {
+  let top, mid, bot;
+  if (c.type === 'joker') {
+    top = SYM_ICON[c.symbol] || '?'; mid = '🃏'; bot = 'JOKER';
+  } else if (c.type === 'double') {
+    top = '×2'; bot = (c.color || '').toUpperCase();
+    const midEl = ce('div','charm-mid');
+    midEl.style.color = COLOR_HEX[c.color] || '#fff';
+    midEl.textContent = '×2';
+    div.append(ce('div','charm-top', top), midEl, ce('div','charm-bot', bot));
+    return;
+  } else {
+    top = c.value; mid = String(c.value); bot = (c.color || '').toUpperCase();
+  }
+  const midEl = ce('div','charm-mid');
+  midEl.style.color = COLOR_HEX[c.color] || '#fff';
+  midEl.textContent = mid;
+  div.append(ce('div','charm-top', String(top)), midEl, ce('div','charm-bot', bot));
+}
+
+function mkBaelf(baelf, opts = {}) {
+  const div = ce('div', 'baelf-card' +
+    (opts.clickable ? ' clickable' : '') +
+    (opts.selected  ? ' selected'  : '') +
+    (opts.contested ? ' contested' : '') +
+    (baelf.complete ? ' complete'  : ''));
+
+  div.style.borderColor = COLOR_HEX[baelf.color] || '#555';
+  div.style.background  = COLOR_DIM[baelf.color] || '#222';
+
+  // Full-card image (9:15 ratio, covers entire card)
+  const imgSrc = `/cards/baelf_${baelf.color}_${baelf.slots}.png`;
+  const img    = document.createElement('img');
+  img.className = 'baelf-img';
+  img.src       = imgSrc;
+  img.onerror   = () => img.remove();
+  div.appendChild(img);
+
+
+  // Semi-transparent overlay at bottom with symbol + slots
+  const overlay = ce('div', 'baelf-overlay');
+
+  const slots = ce('div', 'baelf-slots');
+  for (let s = 0; s < baelf.slots; s++) {
+    const dot = ce('div', 'baelf-slot');
+    if (s < baelf.bulbs.length) {
+      const ownerColor = _gs?.players[baelf.bulbs[s]]?.color;
+      const hex = COLOR_HEX[ownerColor] || 'rgba(255,255,255,.6)';
+      dot.style.background = hex;
+      dot.style.boxShadow  = `0 0 4px ${hex}`;
+      dot.title = _gs?.players[baelf.bulbs[s]]?.name || '';
+    }
+    slots.appendChild(dot);
+  }
+  overlay.appendChild(slots);
+  overlay.appendChild(ce('div', 'baelf-count', `${baelf.bulbs.length}/${baelf.slots}`));
+  div.appendChild(overlay);
+  return div;
+}
+
+function mkMiniBaelf(baelf, isActive) {
+  const div = ce('div','mini-baelf' + (isActive?' active-slot':'') + (baelf.complete?' complete':''));
+  div.style.borderColor = COLOR_HEX[baelf.color] || '#555';
+  div.style.background  = COLOR_DIM[baelf.color] || '#222';
+
+  // Slot dots — filled ones show the owner's colour
+  const dots = ce('div','mini-slot-dots');
+  for (let s = 0; s < baelf.slots; s++) {
+    const d = ce('div','mini-slot-dot' + (s < baelf.bulbs.length ? ' filled' : ''));
+    if (s < baelf.bulbs.length) {
+      const ownerColor = _gs?.players[baelf.bulbs[s]]?.color;
+      d.style.background = COLOR_HEX[ownerColor] || 'rgba(255,255,255,.7)';
+      d.title = _gs?.players[baelf.bulbs[s]]?.name || '';
+    }
+    dots.appendChild(d);
+  }
+  const countEl = ce('div', 'mini-count', `${baelf.bulbs.length}/${baelf.slots}`);
+  div.appendChild(dots);
+  div.appendChild(countEl);
+  return div;
+}
+
+// ══════════════════════════════════════════════════════════════
+// GAME RENDER (master)
+// ══════════════════════════════════════════════════════════════
+function renderGame(st) {
+  _gs = st;
+  showScreen('screen-game');
+  const me = st.players[st.myIdx];
+
+  // My badge
+  const badge = el('my-name-badge');
+  badge.textContent       = me.name;
+  badge.style.color       = COLOR_HEX[me.color] || '#aaa';
+  badge.style.borderColor = COLOR_HEX[me.color] || '#aaa';
+  badge.style.background  = COLOR_DIM[me.color] || '#222';
+
+  if (st.phase !== _prevPhase) {
+    _mode = ''; _selCards = []; _selBaelf = null;
+    if (st.phase === 'TIE_BREAK') { _tbCard = null; clearInterval(_tieInt); _tieInt = null; }
+    _prevPhase = st.phase;
+  }
+
+  // Header
+  const phaseLabels = {
+    CHOOSE_BAELFUNGIOUS: 'Escolher Baelfungious',
+    CHOOSE_TARGET:       'Escolher Alvo',
+    PLAYER_ACTIONS:      'BULBOUS',
+    TIE_BREAK:           '⚔️ Desempate',
+    GAME_OVER:           'Fim de Jogo',
+  };
+  el('hdr-phase').textContent = phaseLabels[st.phase] || st.phase;
+  el('hdr-round').textContent = `Ronda ${st.roundNum}`;
+
+  // Deck info: warn when low, show Reshuffle when empty
+  const deckNote = st.deckSize === 0
+    ? '🔀 Reshuffle!'
+    : st.deckSize <= 4
+      ? `⚠️ 🂠${st.deckSize}`
+      : `🂠${st.deckSize}`;
+  el('hdr-deck').textContent = `${deckNote}  🗑️${st.discardSize}`;
+  el('hdr-deck').style.color = st.deckSize <= 4 ? 'var(--yellow)' : 'var(--muted)';
+
+  // Detect hand refill (hand grew compared to previous state)
+  if (_gs && _prevHandSize !== undefined) {
+    const me = st.players[st.myIdx];
+    if (me.hand && me.hand.length > _prevHandSize && _prevHandSize > 0) {
+      showRefillBanner(me.hand.length - _prevHandSize);
+    }
+  }
+  _prevHandSize = st.myHand?.length ?? 0;
+
+  renderOpponents(st);
+  renderCentre(st);
+  renderMyBaelfs(st);
+  renderActionBar(st);
+  renderHand(st);
+  handleOverlays(st);
+}
+
+// ── Opponents ─────────────────────────────────────────────────
+// Returns action text + colour for one player index given current state
+function oppActionInfo(st, i) {
+  const p   = st.players[i];
+  const lr  = st.lastTrickResult;
+
+  // ── After a trick resolved: show totals + winner ─────────────
+  if (lr && st.phase === 'PLAYER_ACTIONS') {
+    const at  = st.trick?.actionTypes?.[i];
+    const sc  = lr.scores?.[i];    // null for pass/swap, object for bet
+    const isW = lr.winner === i || lr.tieWinner === i;
+    const isTied = lr.tiedPlayers?.includes(i);
+    // Always show pass/swap even when sc is null
+    if (at === 'pass') return { text: '⏭ Passou', color: 'var(--muted)' };
+    if (at === 'swap') return { text: '🔄 Trocou', color: '#7ab8ff' };
+    if (sc != null) {   // only bet players have a non-null score
+      const total = sc.total === Infinity ? '∞' : sc.total;
+      const trophy = isW ? ' 🏆' : isTied ? ' ⚔️' : '';
+      return { text: `${total}${trophy}`, color: isW ? 'var(--yellow)' : COLOR_HEX[p.color] || '#aaa' };
+    }
+  }
+
+  // ── During PLAYER_ACTIONS ─────────────────────────────────────
+  if (st.trick && (st.phase === 'PLAYER_ACTIONS' || st.trick?.revealed)) {
+    const at   = st.trick.actionTypes[i];
+    const bets = st.trick.bets?.[i];
+    const isAct = st.phase === 'PLAYER_ACTIONS' &&
+                  st.trick.actionOrder[st.trick.currentActorIdx] === i &&
+                  at === null;
+    if (at === 'bet' && bets) {
+      const n = bets.length;
+      return { text: `🃏 ${n} carta${n !== 1 ? 's' : ''}`, color: COLOR_HEX[p.color] || '#aaa' };
+    }
+    if (at === 'swap') return { text: '🔄 Trocou', color: '#7ab8ff' };
+    if (at === 'pass') return { text: '⏭ Passou',  color: 'var(--muted)' };
+    if (isAct)         return { text: '⏳ A pensar…', color: 'var(--accent)' };
+    if (at === null)   return { text: '— aguarda —', color: 'var(--muted)' };
+  }
+
+  // ── Tiebreak ─────────────────────────────────────────────────
+  if (st.phase === 'TIE_BREAK' && st.trick?.tiedPlayers.includes(i)) {
+    return st.trick.tieBreakSubmitted[i]
+      ? { text: '✓ Decidiu', color: 'var(--green)' }
+      : { text: '⚔️ A decidir…', color: 'var(--yellow)' };
+  }
+
+  return { text: '', color: 'var(--muted)' };
+}
+
+function renderOpponents(st) {
+  const area = el('opponents-area');
+  area.innerHTML = '';
+  for (let i = 0; i < st.players.length; i++) {
+    if (i === st.myIdx) continue;
+    const p = st.players[i];
+    const isGov = i === st.governorIdx;
+    const isAct = st.trick && st.phase === 'PLAYER_ACTIONS' &&
+                  st.trick.actionOrder[st.trick.currentActorIdx] === i &&
+                  st.trick.actionTypes[i] === null;
+
+    const panel = ce('div','opponent-panel' + (isGov?' governor':'') + (isAct?' acting':''));
+
+    const nameEl = ce('div','opp-name', p.name + (isGov?' 👑':'') + (p.isBot?' 🤖':''));
+    nameEl.style.color = COLOR_HEX[p.color] || '#aaa';
+
+    const meta = ce('div','opp-meta', `🂠 ${p.handSize} carta${p.handSize !== 1 ? 's' : ''}`);
+
+    const { text, color } = oppActionInfo(st, i);
+    const actionEl = ce('div','opp-action', text);
+    actionEl.style.color = color;
+    // Make winning score big & bright
+    if (st.lastTrickResult && (st.lastTrickResult.winner === i || st.lastTrickResult.tieWinner === i)) {
+      actionEl.style.fontSize = '1.05rem';
+    }
+
+    const bfs  = ce('div','opp-baelfs');
+    const aset = new Set(p.activeSlots.filter(s => s !== null));
+    for (let bi = 0; bi < p.baelfungious.length; bi++)
+      bfs.appendChild(mkMiniBaelf(p.baelfungious[bi], aset.has(bi)));
+
+    panel.append(nameEl, meta, actionEl, bfs);
+    area.appendChild(panel);
+  }
+}
+
+// ── Centre ────────────────────────────────────────────────────
+function renderCentre(st) {
+  const area = el('centre-area');
+  area.innerHTML = '';
+  const t = st.trick;
+  const isGovPick = st.phase === 'CHOOSE_TARGET' && st.myIdx === st.governorIdx;
+
+  for (let pi = 0; pi < st.players.length; pi++) {
+    const p = st.players[pi];
+    for (let si = 0; si < p.activeSlots.length; si++) {
+      const bi = p.activeSlots[si];
+      if (bi === null) continue;
+      const baelf = p.baelfungious[bi];
+
+      const slot = ce('div','active-baelf-slot');
+      const ownerLbl = ce('div','owner-label', p.name);
+      slot.appendChild(ownerLbl);
+
+      // Governor target marker
+      if (t && t.targetPlayerIdx === pi && t.targetSlotIdx === si) {
+        const gm = ce('div','gov-marker','👑');
+        slot.appendChild(gm);
+      }
+
+      const isTarget = t && t.targetPlayerIdx === pi && t.targetSlotIdx === si;
+      const isSelectable = isGovPick && !isTarget;
+      const isSel = _selBaelf && _selBaelf.playerIdx === pi && _selBaelf.slotIdx === si;
+
+      const card = mkBaelf(baelf, {
+        clickable: isSelectable,
+        selected:  isSel,
+        contested: isTarget,
+      });
+
+      if (isSelectable) {
+        card.onclick = () => {
+          send({ type:'CHOOSE_TARGET', targetPlayerIdx:pi, targetSlotIdx:si });
+          _selBaelf = null;
+        };
+      }
+
+      // Bet indicators during PLAYER_ACTIONS
+      if (isTarget && st.phase === 'PLAYER_ACTIONS' && t.actionTypes) {
+        const pips = ce('div');
+        pips.style.cssText = 'display:flex;gap:3px;flex-wrap:wrap;justify-content:center;margin-top:3px';
+        for (let bi2 = 0; bi2 < st.players.length; bi2++) {
+          const at = t.actionTypes[bi2];
+          if (at === null) continue;
+          const pip = ce('div');
+          pip.style.cssText = `width:10px;height:10px;border-radius:50%;background:${COLOR_HEX[st.players[bi2].color]||'#aaa'}`;
+          pip.title = st.players[bi2].name + ' · ' + (at||'?');
+          pips.appendChild(pip);
+        }
+        slot.appendChild(pips);
+      }
+
+      slot.appendChild(card);
+      area.appendChild(slot);
+    }
+  }
+
+  if (!area.children.length)
+    area.innerHTML = '<p style="color:var(--muted)">Aguardar escolha de Baelfungious…</p>';
+}
+
+// ── My Baelfs ─────────────────────────────────────────────────
+function renderMyBaelfs(st) {
+  const row = el('my-baelfs-row');
+  row.innerHTML = '';
+  const me   = st.players[st.myIdx];
+  const aset = new Set(me.activeSlots.filter(s => s !== null));
+  const myPending = (st.phase === 'CHOOSE_BAELFUNGIOUS') &&
+    st.replaceNeeded.some(r => r.playerIdx === st.myIdx);
+
+  for (let bi = 0; bi < me.baelfungious.length; bi++) {
+    const baelf    = me.baelfungious[bi];
+    const isActive = aset.has(bi);
+    const isAvail  = myPending && !isActive && !baelf.complete;
+    const isSel    = _selBaelf && _selBaelf.baelfIdx === bi;
+
+    const wrap = ce('div','my-baelf-wrap');
+    const tag  = ce('div','my-baelf-tag', isActive ? '★ Ativa' : baelf.complete ? '✓ Completa' : '');
+    const card = mkBaelf(baelf, { clickable: isAvail, selected: isSel });
+
+    if (isAvail) {
+      card.onclick = () => {
+        _selBaelf = { baelfIdx: bi };
+        renderMyBaelfs(st);
+        renderActionBar(st);
+        playClick();
+      };
+    }
+    wrap.append(tag, card);
+    row.appendChild(wrap);
+  }
+}
+
+// ── Action bar ────────────────────────────────────────────────
+function renderActionBar(st) {
+  const bar = el('action-bar');
+  bar.innerHTML = '';
+  const me = st.players[st.myIdx];
+  const t  = st.trick;
+
+  // ── CHOOSE_BAELFUNGIOUS ─────────────────────────────────
+  if (st.phase === 'CHOOSE_BAELFUNGIOUS') {
+    const pending = st.replaceNeeded.find(r => r.playerIdx === st.myIdx);
+    if (pending) {
+      el('my-status').textContent = 'Escolhe um Baelfungious para ativar';
+      const btn = mkBtn('Confirmar Baelfungious', 'btn-confirm', () => {
+        if (_selBaelf?.baelfIdx == null) { toast('Seleciona primeiro'); return; }
+        send({ type:'CHOOSE_BAELF', baelfIdx:_selBaelf.baelfIdx });
+        _selBaelf = null;
+      });
+      btn.disabled = _selBaelf?.baelfIdx == null;
+      bar.appendChild(btn);
+    } else {
+      el('my-status').textContent = 'Aguarda os outros jogadores…';
+    }
+    return;
+  }
+
+  // ── CHOOSE_TARGET ────────────────────────────────────────
+  if (st.phase === 'CHOOSE_TARGET') {
+    el('my-status').textContent = st.myIdx === st.governorIdx
+      ? '👑 És o Governante — clica no alvo no centro'
+      : 'Aguarda o Governante escolher…';
+    return;
+  }
+
+  // ── PLAYER_ACTIONS ───────────────────────────────────────
+  if (st.phase === 'PLAYER_ACTIONS' && t) {
+    // Waiting for discard excess
+    if (t.waitingForDiscard === st.myIdx) {
+      el('my-status').textContent = `Descarta ${t.discardExcess} carta(s) em excesso`;
+      const btn = mkBtn(`Descartar ${t.discardExcess} carta(s)`, 'btn-cancel', () => {
+        if (_selCards.length !== t.discardExcess) { toast(`Seleciona ${t.discardExcess} carta(s)`); return; }
+        send({ type:'DISCARD_EXCESS', cardIds:[..._selCards] });
+        _selCards = [];
+      });
+      bar.appendChild(btn);
+      return;
+    }
+
+    // Already acted?
+    if (t.actionTypes[st.myIdx] !== null) {
+      const lr = st.lastTrickResult;
+      const myAt = t.actionTypes[st.myIdx];
+      // After reveal: show score + trophy
+      if (lr && lr.scores?.[st.myIdx] !== undefined && myAt === 'bet') {
+        const sc = lr.scores[st.myIdx];
+        const total = sc.total === Infinity ? '∞' : sc.total;
+        const isW   = lr.winner === st.myIdx || lr.tieWinner === st.myIdx;
+        const isTied = lr.tiedPlayers?.includes(st.myIdx);
+        const emoji  = isW ? ' 🏆 Ganhaste!' : isTied ? ' ⚔️ Empate' : '';
+        el('my-status').style.color = isW ? 'var(--yellow)' : '';
+        el('my-status').textContent = `Apostaste ${total}${emoji} — aguarda os outros`;
+      } else {
+        el('my-status').style.color = '';
+        const lbl = { bet:'Apostaste 🃏', swap:'Trocaste 🔄', pass:'Passaste ⏭' };
+        el('my-status').textContent = (lbl[myAt] || 'Feito') + ' — aguarda os outros';
+      }
+      return;
+    }
+
+    // Not my turn?
+    const myTurn = t.actionOrder[t.currentActorIdx] === st.myIdx;
+    if (!myTurn) {
+      const who = st.players[t.actionOrder[t.currentActorIdx]];
+      el('my-status').textContent = `Vez de ${who?.name || '…'}`;
+      return;
+    }
+
+    el('my-status').textContent = 'A tua vez'; el('my-status').style.textAlign = 'center';
+
+    if (_mode === '') {
+      bar.append(
+        mkBtn('🃏 Apostar', 'btn-bet',  () => { _mode='bet';  _selCards=[]; renderActionBar(st); renderHand(st); }),
+        mkBtn('🔄 Trocar',  'btn-swap', () => { _mode='swap'; _selCards=[]; renderActionBar(st); renderHand(st); }),
+        mkBtn('⏭ Passar',   'btn-pass', () => { send({ type:'PASS' }); _mode=''; }),
+      );
+    }
+
+    if (_mode === 'bet') {
+      el('my-status').textContent = 'Seleciona cartas para apostar';
+      const confirm = mkBtn(`Apostar (${_selCards.length})`, 'btn-confirm', () => {
+        if (!_selCards.length) { toast('Seleciona pelo menos 1 carta'); return; }
+        send({ type:'BET', cardIds:[..._selCards] }); _mode=''; _selCards=[];
+      });
+      const cancel = mkBtn('Cancelar', 'btn-cancel', () => { _mode=''; _selCards=[]; renderActionBar(st); renderHand(st); });
+      bar.append(confirm, cancel);
+    }
+
+    if (_mode === 'swap') {
+      el('my-status').textContent = 'Seleciona 1 ou 2 cartas para trocar';
+      const confirm = mkBtn(`Trocar (${_selCards.length})`, 'btn-confirm', () => {
+        if (_selCards.length < 1 || _selCards.length > 2) { toast('Seleciona 1 ou 2 cartas'); return; }
+        send({ type:'SWAP', cardIds:[..._selCards] }); _mode=''; _selCards=[];
+      });
+      confirm.disabled = !_selCards.length;
+      const cancel = mkBtn('Cancelar', 'btn-cancel', () => { _mode=''; _selCards=[]; renderActionBar(st); renderHand(st); });
+      bar.append(confirm, cancel);
+    }
+    return;
+  }
+
+  if (st.phase === 'TIE_BREAK') {
+    el('my-status').textContent = 'Desempate em curso…';
+    return;
+  }
+
+  el('my-status').textContent = '';
+}
+
+function mkBtn(txt, cls, fn) {
+  const b = ce('button','btn-action ' + cls, txt);
+  b.onclick = fn;
+  return b;
+}
+
+// ── Hand ──────────────────────────────────────────────────────
+function renderHand(st) {
+  const row = el('my-hand-row');
+  row.innerHTML = '';
+  if (!st.myHand) return;
+  const t     = st.trick;
+  const baelf = activeBaelf(st);
+
+  for (const c of st.myHand) {
+    const isSel  = _selCards.includes(c.id);
+    let clickable = false, invalid = false;
+
+    if (_mode === 'bet' && baelf) {
+      clickable = cardCanPlay(c, baelf);
+      invalid   = !clickable;
+    } else if (_mode === 'swap') {
+      clickable = true;
+    } else if (t && t.waitingForDiscard === st.myIdx) {
+      clickable = true;
+    }
+
+    const card = mkCharm(c, { clickable, selected: isSel, invalid });
+    if (clickable) {
+      card.onclick = () => {
+        const idx = _selCards.indexOf(c.id);
+        if (idx !== -1) { _selCards.splice(idx, 1); }
+        else {
+          if (_mode === 'swap' && _selCards.length >= 2) { toast('Máximo 2 cartas'); return; }
+          _selCards.push(c.id);
+        }
+        playClick();
+        renderActionBar(st);
+        renderHand(st);
+      };
+    }
+    row.appendChild(card);
+  }
+}
+
+function activeBaelf(st) {
+  const t = st.trick;
+  if (!t) return null;
+  const p = st.players[t.targetPlayerIdx];
+  if (!p) return null;
+  const bi = p.activeSlots[t.targetSlotIdx];
+  return bi !== null ? p.baelfungious[bi] : null;
+}
+
+function cardCanPlay(card, baelf) {
+  if (!baelf) return false;
+  if (card.type === 'joker') return card.symbol === baelf.symbol;
+  return card.color === baelf.color;
+}
+
+// ══════════════════════════════════════════════════════════════
+// OVERLAYS
+// ══════════════════════════════════════════════════════════════
+function handleOverlays(st) {
+  handleReveal(st);
+  handleTiebreak(st);
+  handleGameOver(st);
+}
+function closeOverlays() {
+  ['reveal-overlay','tiebreak-overlay','gameover-overlay'].forEach(id => el(id).classList.remove('show'));
+  clearInterval(_tieInt);
+}
+
+// ── Reveal ────────────────────────────────────────────────────
+function handleReveal(st) {
+  if (!st.trick || !st.trick.revealed) return;
+  if (st.phase === 'TIE_BREAK' || st.phase === 'GAME_OVER') return;
+
+  const key = `${st.trick.targetPlayerIdx}-${st.trick.targetSlotIdx}-${st.roundNum}-${JSON.stringify(st.trick.bets)}`;
+  if (_revealKey === key) return;
+  _revealKey = key;
+
+  const rows = el('reveal-rows');
+  rows.innerHTML = '';
+  const t = st.trick;
+
+  for (let i = 0; i < st.players.length; i++) {
+    const p  = st.players[i];
+    const at = t.actionTypes[i];
+    if (!at) continue;
+
+    const row    = ce('div','reveal-row');
+    const nameEl = ce('div','reveal-pname', p.name + (i === st.myIdx ? ' (tu)' : ''));
+    nameEl.style.color = COLOR_HEX[p.color] || '#aaa';
+
+    const cardsEl = ce('div','reveal-cards');
+    if (at === 'pass') {
+      cardsEl.appendChild(ce('span', null, '⏭ Passou'));
+    } else if (at === 'swap') {
+      cardsEl.appendChild(ce('span', null, '🔄 Trocou'));
+    } else {
+      const bet = t.bets[i];
+      if (bet && bet.length > 0) {
+        for (const c of bet) {
+          const cd = mkCharm(c);
+          cd.style.cssText = 'transform:scale(.72);transform-origin:top left;flex-shrink:0';
+          cardsEl.appendChild(cd);
+        }
+      } else {
+        cardsEl.appendChild(ce('span', null, '—'));
+      }
+    }
+    row.append(nameEl, cardsEl);
+    rows.appendChild(row);
+  }
+
+  const lr = st.lastTrickResult;
+  const resEl = el('reveal-result');
+  if (lr?.winner != null) {
+    resEl.textContent = `🏆 ${st.players[lr.winner]?.name} ganhou!`;
+    resEl.style.color = COLOR_HEX[st.players[lr.winner]?.color] || '#fff';
+    playReveal();
+  } else {
+    resEl.textContent = 'Empate — nada acontece';
+    resEl.style.color = 'var(--muted)';
+  }
+
+  el('reveal-overlay').classList.add('show');
+}
+
+el('btn-dismiss-reveal').onclick = () => el('reveal-overlay').classList.remove('show');
+
+// ── Tiebreak ──────────────────────────────────────────────────
+function handleTiebreak(st) {
+  const ov = el('tiebreak-overlay');
+  if (st.phase !== 'TIE_BREAK') { ov.classList.remove('show'); clearInterval(_tieInt); return; }
+
+  const t = st.trick;
+  if (!t) return;
+  ov.classList.add('show');
+
+  const amTied    = t.tiedPlayers.includes(st.myIdx);
+  const submitted = t.tieBreakSubmitted[st.myIdx];
+  const waitingFor = t.tiedPlayers.filter(i => !t.tieBreakSubmitted[i]);
+  el('tb-waiting').textContent = waitingFor.length ? `Aguardar: ${waitingFor.map(i => st.players[i].name).join(', ')}` : '';
+
+  if (!amTied || submitted) {
+    el('tb-hand').innerHTML = '';
+    el('btn-tb-play').disabled = true;
+    return;
+  }
+
+  // Timer — only start once per tiebreak phase
+  if (!_tieInt) {
+    const started = Date.now();
+    _tieInt = setInterval(() => {
+      const rem = Math.max(0, Math.ceil(20 - (Date.now() - started) / 1000));
+      el('tb-timer').textContent = `Tempo restante: ${rem}s`;
+      if (!rem) { clearInterval(_tieInt); _tieInt = null; }
+    }, 400);
+  }
+
+  // Eligible cards — rebuild only if selection changed or first render
+  const baelf   = activeBaelf(st);
+  const handEl  = el('tb-hand');
+  handEl.innerHTML = '';
+  // Do NOT reset _tbCard here — preserve user selection across state updates
+
+  for (const c of st.myHand) {
+    const eligible = baelf && c.color === baelf.color && c.type !== 'joker';
+    const isSel    = _tbCard === c.id;
+    const card     = mkCharm(c, { clickable: eligible, selected: isSel, invalid: !eligible });
+    if (eligible) {
+      card.onclick = () => {
+        _tbCard = _tbCard === c.id ? null : c.id;
+        playClick();
+        renderTbHand(st);
+      };
+    }
+    handEl.appendChild(card);
+  }
+  el('btn-tb-play').disabled = _tbCard === null;
+}
+
+function renderTbHand(st) {
+  const baelf   = activeBaelf(st);
+  const handEl  = el('tb-hand');
+  handEl.innerHTML = '';
+  for (const c of st.myHand) {
+    const eligible = baelf && c.color === baelf.color && c.type !== 'joker';
+    const isSel    = _tbCard === c.id;
+    const card     = mkCharm(c, { clickable: eligible, selected: isSel, invalid: !eligible });
+    if (eligible) {
+      card.onclick = () => {
+        _tbCard = _tbCard === c.id ? null : c.id;
+        playClick();
+        renderTbHand(st);
+      };
+    }
+    handEl.appendChild(card);
+  }
+  el('btn-tb-play').disabled = _tbCard === null;
+}
+
+el('btn-tb-play').onclick = () => {
+  send({ type:'TIE_BREAK', cardId: _tbCard });
+  clearInterval(_tieInt);
+  el('tiebreak-overlay').classList.remove('show');
+};
+el('btn-tb-pass').onclick = () => {
+  send({ type:'TIE_BREAK', cardId: null });
+  clearInterval(_tieInt);
+  el('tiebreak-overlay').classList.remove('show');
+};
+
+// ── Game Over ─────────────────────────────────────────────────
+function handleGameOver(st) {
+  if (st.phase !== 'GAME_OVER' || !st.finalScores) return;
+  el('gameover-overlay').classList.add('show');
+
+  const tbody  = el('score-tbody');
+  tbody.innerHTML = '';
+  const maxPts = Math.max(...st.finalScores.map(s => s.total));
+
+  for (const s of [...st.finalScores].sort((a,b) => b.total - a.total)) {
+    const tr = ce('tr', s.total === maxPts ? 'winner-row' : '');
+    const nameEl = ce('td', null, (s.total === maxPts ? '🏆 ' : '') + s.name);
+    nameEl.style.color = COLOR_HEX[s.color] || '#aaa';
+    tr.append(
+      nameEl, ce('td',null,s.bulbs), ce('td',null,s.majority),
+      ce('td',null,s.collection), ce('td',null, String(s.total)),
+    );
+    tbody.appendChild(tr);
+  }
+  playWin();
+}
+
+el('btn-play-again').onclick = () => {
+  el('gameover-overlay').classList.remove('show');
+  send({ type:'RESTART' });
+};
+el('btn-go-lobby').onclick = () => {
+  el('gameover-overlay').classList.remove('show');
+  leaveGame();
+};
+
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION BUTTONS
+// ══════════════════════════════════════════════════════════════
+el('btn-go').onclick = submitName;
+el('inp-name').onkeydown = e => { if (e.key === 'Enter') submitName(); };
+
+function submitName() {
+  const n = el('inp-name').value.trim().slice(0,20);
+  if (!n) { toast('Precisas de um nome!'); return; }
+  myName = n;
+  showScreen('screen-lobby');
+  el('lby-name').textContent = myName;
+  if (_lobbies.length) renderLobbyList();
+  send({ type:'LOBBIES' });
+}
+
+el('btn-change-name').onclick = () => { myName = ''; showScreen('screen-name'); };
+el('btn-start').onclick       = () => send({ type:'START' });
+el('btn-leave-wait').onclick  = () => leaveGame();
+el('btn-leave').onclick       = () => leaveGame();
+
+function leaveGame() {
+  send({ type:'LEAVE_LOBBY' });
+  myLobbyId=''; mySeat=-1; _gs=null;
+  sessionStorage.removeItem('bulb_token');
+  myToken = '';
+  closeOverlays();
+  showScreen('screen-lobby');
+  send({ type:'LOBBIES' });
+}
+
+// ══════════════════════════════════════════════════════════════
+// AUDIO
+// ══════════════════════════════════════════════════════════════
+let _actx = null;
+function getCtx() {
+  if (!_actx) _actx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_actx.state === 'suspended') _actx.resume();
+  return _actx;
+}
+document.addEventListener('pointerdown', () => { try { getCtx(); } catch {} }, { once:true });
+
+function playClick() {
+  try {
+    const ctx = getCtx(), now = ctx.currentTime;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine'; o.frequency.value = 660;
+    g.gain.setValueAtTime(.1, now); g.gain.exponentialRampToValueAtTime(.001, now+.07);
+    o.start(now); o.stop(now+.07);
+  } catch {}
+}
+function playReveal() {
+  try {
+    const ctx = getCtx(), now = ctx.currentTime;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(280, now);
+    o.frequency.exponentialRampToValueAtTime(560, now+.28);
+    g.gain.setValueAtTime(.18, now); g.gain.exponentialRampToValueAtTime(.001, now+.35);
+    o.start(now); o.stop(now+.35);
+  } catch {}
+}
+function playWin() {
+  try {
+    const ctx = getCtx(), now = ctx.currentTime;
+    [[0,523],[.13,659],[.26,784],[.4,1047]].forEach(([t,f]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = f;
+      g.gain.setValueAtTime(.14, now+t); g.gain.exponentialRampToValueAtTime(.001, now+t+.25);
+      o.start(now+t); o.stop(now+t+.25);
+    });
+  } catch {}
+}
+
+// ══════════════════════════════════════════════════════════════
+// REFILL BANNER
+// ══════════════════════════════════════════════════════════════
+function showRefillBanner(n) {
+  const b = el('refill-banner');
+  b.textContent = `🃏 +${n} carta${n !== 1 ? 's' : ''}! Mão reabastecida`;
+  b.style.display = 'block';
+  // Reset animation
+  b.style.animation = 'none';
+  b.offsetHeight; // reflow
+  b.style.animation = 'fadeInOut 2.8s forwards';
+  setTimeout(() => { b.style.display = 'none'; }, 2900);
+}
+
+// ══════════════════════════════════════════════════════════════
+// RULES MODAL
+// ══════════════════════════════════════════════════════════════
+function openRules() { el('rules-overlay').classList.add('show'); }
+function closeRules(){ el('rules-overlay').classList.remove('show'); }
+
+el('btn-close-rules').onclick  = closeRules;
+el('rules-overlay').onclick    = e => { if (e.target === el('rules-overlay')) closeRules(); };
+el('btn-rules-lobby').onclick  = openRules;
+el('btn-rules-game').onclick   = openRules;
+
+// Tab switching
+document.querySelectorAll('.rules-tab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.rules-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.rules-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    el('tab-' + tab)?.classList.add('active');
+  };
+});
+
+// Close on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeRules();
+});
+
+// ══════════════════════════════════════════════════════════════
+// PWA INSTALL PROMPT
+// ══════════════════════════════════════════════════════════════
+let _deferredInstall = null;
+
+// Android / Chrome: capture the install prompt
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredInstall = e;
+  // Only show if not already installed and not dismissed this session
+  if (!sessionStorage.getItem('pwa_dismissed') && !isPwaInstalled()) {
+    el('pwa-banner').classList.remove('hidden');
+  }
+});
+
+// Hide banner if already running as standalone
+function isPwaInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+el('btn-pwa-install').onclick = async () => {
+  if (!_deferredInstall) return;
+  el('pwa-banner').classList.add('hidden');
+  _deferredInstall.prompt();
+  const { outcome } = await _deferredInstall.userChoice;
+  _deferredInstall = null;
+  if (outcome === 'accepted') sessionStorage.setItem('pwa_dismissed', '1');
+};
+
+el('btn-pwa-dismiss').onclick = () => {
+  el('pwa-banner').classList.add('hidden');
+  sessionStorage.setItem('pwa_dismissed', '1');
+};
+
+el('btn-ios-close').onclick = () => {
+  el('ios-install-sheet').classList.remove('show');
+  sessionStorage.setItem('pwa_dismissed', '1');
+};
+
+// iOS Safari: show guide if not installed and not dismissed
+function checkIosInstallPrompt() {
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSafari = /safari/i.test(navigator.userAgent) && !/chrome|crios|fxios/i.test(navigator.userAgent);
+  if (isIos && isSafari && !isPwaInstalled() && !sessionStorage.getItem('pwa_dismissed')) {
+    // Small delay so the page loads first
+    setTimeout(() => el('ios-install-sheet').classList.add('show'), 2000);
+  }
+}
+checkIosInstallPrompt();
+
+// App was installed
+window.addEventListener('appinstalled', () => {
+  el('pwa-banner').classList.add('hidden');
+  _deferredInstall = null;
+});
+
+// ══════════════════════════════════════════════════════════════
+// SERVICE WORKER + BOOT
+// ══════════════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+showScreen('screen-name');
+connect();
+</script>
+</body>
+</html>
